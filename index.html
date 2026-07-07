@@ -10,6 +10,7 @@
       --primary-color: #87CEEB;
       --primary-light: #E0F4FF;
       --primary-dark: #5BA3C7;
+      --primary-rgb: 135, 206, 235;
       --accent-color: #FFB6C1;
       --bg-color: #FFFFFF;
       --card-bg: #F8FAFC;
@@ -22,6 +23,7 @@
       --primary-color: #98FB98;
       --primary-light: #E8FFF0;
       --primary-dark: #6BCB6B;
+      --primary-rgb: 152, 251, 152;
       --accent-color: #FFE4B5;
       --hover-color: rgba(152, 251, 152, 0.3);
     }
@@ -30,6 +32,7 @@
       --primary-color: #FFB6C1;
       --primary-light: #FFF0F5;
       --primary-dark: #E898A8;
+      --primary-rgb: 255, 182, 193;
       --accent-color: #87CEEB;
       --hover-color: rgba(255, 182, 193, 0.3);
     }
@@ -594,94 +597,218 @@
 
     .dice-controls {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 0.75rem;
-      margin-bottom: 1.5rem;
-      padding: 1.2rem;
-      background-color: var(--card-bg);
-      border-radius: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+      padding: 2rem;
+      background: linear-gradient(145deg, var(--card-bg) 0%, var(--hover-color) 50%, var(--primary-light) 100%);
+      border-radius: 20px;
+      box-shadow:
+        0 8px 32px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(var(--primary-rgb), 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .dice-controls::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 200px;
+      height: 200px;
+      background: radial-gradient(circle, rgba(var(--primary-rgb), 0.15) 0%, transparent 70%);
+      border-radius: 50%;
+    }
+
+    .dice-controls::after {
+      content: '';
+      position: absolute;
+      bottom: -30%;
+      left: -10%;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(var(--primary-rgb), 0.1) 0%, transparent 70%);
+      border-radius: 50%;
     }
 
     .control-item {
       display: flex;
       flex-direction: column;
-      gap: 0.4rem;
+      gap: 0.6rem;
+      position: relative;
+      z-index: 1;
     }
 
     .control-item label {
-      font-size: 0.85rem;
-      font-weight: 500;
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--primary-dark);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
 
     .control-item input {
-      padding: 0.4rem 0.6rem;
-      border: 1px solid var(--border-color);
-      border-radius: 6px;
-      font-size: 0.85rem;
+      padding: 0.7rem 1rem;
+      border: 2px solid rgba(var(--primary-rgb), 0.2);
+      border-radius: 14px;
+      font-size: 1.1rem;
+      background-color: rgba(255, 255, 255, 0.9);
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
     }
 
     .control-item input:focus {
       outline: none;
       border-color: var(--primary-color);
+      box-shadow:
+        0 0 0 4px rgba(var(--primary-rgb), 0.2),
+        0 4px 20px rgba(var(--primary-rgb), 0.15);
+      transform: translateY(-1px);
     }
 
     .dice-buttons {
       display: flex;
-      gap: 0.75rem;
+      gap: 1rem;
       margin-bottom: 1.5rem;
       flex-wrap: wrap;
+      justify-content: center;
     }
 
     .dice-btn {
-      padding: 0.6rem 1.2rem;
+      padding: 0.9rem 2rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 16px;
       cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 600;
-      transition: all 0.2s;
+      font-size: 1.05rem;
+      font-weight: 700;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.5px;
+    }
+
+    .dice-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .dice-btn:hover::before {
+      left: 100%;
+    }
+
+    .dice-btn:active {
+      transform: scale(0.96);
     }
 
     .dice-btn.primary {
-      background-color: var(--primary-color);
+      background: linear-gradient(145deg, var(--primary-color) 0%, var(--primary-dark) 50%, var(--primary-color) 100%);
+      background-size: 200% 200%;
       color: white;
+      box-shadow:
+        0 6px 25px rgba(var(--primary-rgb), 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.1);
+      animation: gradientShift 3s ease infinite;
     }
 
     .dice-btn.primary:hover {
-      background-color: var(--primary-dark);
+      transform: translateY(-3px);
+      box-shadow:
+        0 10px 40px rgba(var(--primary-rgb), 0.45),
+        0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .dice-btn.secondary {
       background-color: white;
       color: var(--text-color);
-      border: 1px solid var(--border-color);
+      border: 2px solid rgba(var(--primary-rgb), 0.2);
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
     }
 
     .dice-btn.secondary:hover {
       background-color: var(--hover-color);
+      border-color: var(--primary-color);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 15px rgba(var(--primary-rgb), 0.15);
     }
 
     .dice-btn.confirm {
-      background-color: #22C55E;
+      background: linear-gradient(145deg, #22C55E 0%, #16A34A 50%, #22C55E 100%);
+      background-size: 200% 200%;
       color: white;
+      box-shadow:
+        0 6px 25px rgba(34, 197, 94, 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.1);
+      animation: gradientShift 3s ease infinite;
     }
 
     .dice-btn.confirm:hover {
-      background-color: #16A34A;
+      transform: translateY(-3px);
+      box-shadow:
+        0 10px 40px rgba(34, 197, 94, 0.45),
+        0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    @keyframes gradientShift {
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
     }
 
     .dice-results {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1rem;
+      gap: 1.25rem;
     }
 
     .dice-card {
       background-color: var(--card-bg);
-      border-radius: 12px;
+      border-radius: 20px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      box-shadow:
+        0 6px 24px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(var(--primary-rgb), 0.05);
       position: relative;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .dice-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--primary-color));
+      background-size: 200% 100%;
+      animation: gradientShift 3s ease infinite;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+
+    .dice-card:hover::before {
+      opacity: 1;
+    }
+
+    .dice-card:hover {
+      transform: translateY(-8px) scale(1.02);
+      box-shadow:
+        0 12px 40px rgba(0, 0, 0, 0.15),
+        0 0 0 1px rgba(var(--primary-rgb), 0.15);
     }
 
     .dice-card-delete {
@@ -788,67 +915,130 @@
 
     .copy-buttons {
       display: flex;
-      gap: 0.75rem;
-      margin-top: 1.5rem;
+      gap: 1.25rem;
+      margin: 1.75rem 0;
       justify-content: center;
       flex-wrap: wrap;
+      padding: 1.25rem 1.5rem;
+      background: linear-gradient(145deg, var(--card-bg) 0%, var(--hover-color) 50%, rgba(var(--primary-rgb), 0.1) 100%);
+      border-radius: 16px;
+      box-shadow:
+        0 6px 24px rgba(0, 0, 0, 0.08),
+        0 0 0 1px rgba(var(--primary-rgb), 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .copy-buttons::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -20%;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(var(--primary-rgb), 0.1) 0%, transparent 70%);
+      border-radius: 50%;
     }
 
     .copy-btn {
-      padding: 0.6rem 1.2rem;
+      padding: 0.8rem 1.75rem;
       border: none;
-      border-radius: 8px;
+      border-radius: 14px;
       cursor: pointer;
-      font-size: 0.95rem;
-      font-weight: 500;
-      transition: all 0.2s;
+      font-size: 1rem;
+      font-weight: 700;
+      transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.5px;
+      z-index: 1;
+    }
+
+    .copy-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.6s ease;
+    }
+
+    .copy-btn:hover::before {
+      left: 100%;
+    }
+
+    .copy-btn:active {
+      transform: scale(0.96);
     }
 
     .copy-btn.artists {
-      background-color: var(--accent-color);
+      background: linear-gradient(145deg, var(--accent-color) 0%, #F472B6 50%, var(--accent-color) 100%);
+      background-size: 200% 200%;
       color: white;
+      box-shadow:
+        0 6px 20px rgba(244, 114, 182, 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.1);
+      animation: gradientShift 3s ease infinite;
     }
 
     .copy-btn.artists:hover {
-      opacity: 0.9;
+      transform: translateY(-3px);
+      box-shadow:
+        0 10px 30px rgba(244, 114, 182, 0.45),
+        0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .copy-btn.weighted {
-      background-color: var(--primary-color);
+      background: linear-gradient(145deg, var(--primary-color) 0%, var(--primary-dark) 50%, var(--primary-color) 100%);
+      background-size: 200% 200%;
       color: white;
+      box-shadow:
+        0 6px 20px rgba(var(--primary-rgb), 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.1);
+      animation: gradientShift 3s ease infinite;
     }
 
     .copy-btn.weighted:hover {
-      background-color: var(--primary-dark);
+      transform: translateY(-3px);
+      box-shadow:
+        0 10px 30px rgba(var(--primary-rgb), 0.45),
+        0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .artist-selector {
-      margin-bottom: 1.2rem;
-      padding: 1rem;
-      background-color: var(--card-bg);
-      border-radius: 12px;
+      margin-bottom: 1.5rem;
+      padding: 1.5rem;
+      background: linear-gradient(135deg, var(--card-bg) 0%, var(--hover-color) 100%);
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
     }
 
     .artist-selector label {
       display: block;
-      margin-bottom: 0.4rem;
-      font-size: 0.85rem;
-      font-weight: 500;
+      margin-bottom: 0.6rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--primary-dark);
     }
 
     .artist-selector textarea {
       width: 100%;
-      height: 70px;
-      padding: 0.6rem;
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      font-size: 0.85rem;
+      height: 80px;
+      padding: 0.8rem;
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 0.95rem;
       resize: vertical;
+      background-color: white;
+      transition: all 0.2s;
     }
 
     .artist-selector textarea:focus {
       outline: none;
       border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px var(--hover-color);
     }
 
     .artist-search-container {
@@ -897,6 +1087,49 @@
 
     .suggestion-item:hover {
       background-color: var(--hover-color);
+    }
+
+    .progress-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background-color: rgba(0, 0, 0, 0.1);
+      z-index: 3000;
+      display: none;
+    }
+
+    .progress-bar {
+      height: 100%;
+      background: linear-gradient(90deg, var(--primary-color), var(--accent-color), var(--primary-color));
+      background-size: 200% 100%;
+      animation: gradientShift 3s ease infinite;
+      width: 0%;
+      transition: width 0.2s ease;
+    }
+
+    .progress-container.show {
+      display: block;
+    }
+
+    .progress-text {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      padding: 0.3rem 0.8rem;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      z-index: 3001;
+      display: none;
+      white-space: nowrap;
+    }
+
+    .progress-text.show {
+      display: block;
     }
 
     .toast {
@@ -958,7 +1191,7 @@
       }
 
       .dice-results {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
       }
 
       .dice-buttons {
@@ -1023,6 +1256,7 @@
       <input type="file" id="file-input" accept=".json" onchange="loadData(event)">
       <button class="upload-btn secondary" onclick="exportData()">📥 导出数据</button>
       <button class="upload-btn secondary" onclick="exportAbandonedArtists()">🗑️ 导出废弃画师</button>
+      <button class="upload-btn secondary" onclick="compressAllImages()">🖼️ 压缩图片</button>
       <span class="data-info" id="data-info">未加载数据</span>
     </div>
 
@@ -1031,10 +1265,10 @@
         <div class="filter-item">
           <label>每页:</label>
           <div class="filter-buttons">
-            <button class="filter-btn active" data-value="6" onclick="setPageSize(6)">6</button>
-            <button class="filter-btn" data-value="9" onclick="setPageSize(9)">9</button>
-            <button class="filter-btn" data-value="12" onclick="setPageSize(12)">12</button>
-            <button class="filter-btn" data-value="18" onclick="setPageSize(18)">18</button>
+            <button class="filter-btn active" data-value="20" onclick="setPageSize(20)">20</button>
+            <button class="filter-btn" data-value="40" onclick="setPageSize(40)">40</button>
+            <button class="filter-btn" data-value="60" onclick="setPageSize(60)">60</button>
+            <button class="filter-btn" data-value="100" onclick="setPageSize(100)">100</button>
           </div>
         </div>
         <div class="filter-item">
@@ -1098,12 +1332,17 @@
         <button class="dice-btn secondary" onclick="clearDice()">🗑️ 清空</button>
       </div>
 
-      <div id="dice-copy-buttons" class="copy-buttons" style="display:none;">
+      <div id="dice-copy-buttons-top" class="copy-buttons" style="display:none;">
         <button class="copy-btn artists" onclick="copyArtists()">📋 复制画师</button>
         <button class="copy-btn weighted" onclick="copyWeightedArtists()">📋 复制画师和权重</button>
       </div>
 
       <div id="dice-results" class="dice-results"></div>
+
+      <div id="dice-copy-buttons-bottom" class="copy-buttons" style="display:none;">
+        <button class="copy-btn artists" onclick="copyArtists()">📋 复制画师</button>
+        <button class="copy-btn weighted" onclick="copyWeightedArtists()">📋 复制画师和权重</button>
+      </div>
     </div>
   </main>
 
@@ -1122,6 +1361,10 @@
   </div>
 
   <div id="toast" class="toast"></div>
+  <div id="progress-container" class="progress-container">
+    <div id="progress-bar" class="progress-bar"></div>
+  </div>
+  <div id="progress-text" class="progress-text"></div>
 
   <script>
     let galleryData = { artworks: [], artists: [], images: {} };
@@ -1166,7 +1409,15 @@
           const tx = db.transaction('galleryData', 'readonly');
           const store = tx.objectStore('galleryData');
           const request = store.get('galleryData');
-          request.onsuccess = () => resolve(request.result || null);
+          request.onsuccess = () => {
+            const result = request.result;
+            if (result) {
+              const { originalImages: _, ...dataWithoutOriginal } = result;
+              resolve(dataWithoutOriginal || null);
+            } else {
+              resolve(null);
+            }
+          };
           request.onerror = () => reject(request.error);
         });
       } catch {
@@ -1216,13 +1467,14 @@
         `已加载 ${galleryData.artworks.length} 个作品，${galleryData.artists.length} 个画师，${abandonedCount} 个废弃画师`;
     }
 
-    function toggleAbandonArtist(artistId) {
+    async function toggleAbandonArtist(artistId) {
       if (abandonedArtists.has(artistId)) {
         abandonedArtists.delete(artistId);
         showToast('已取消废弃标记');
       } else {
         abandonedArtists.add(artistId);
-        showToast('已标记为废弃');
+        await compressArtistImages(artistId);
+        showToast('已标记为废弃，图片已压缩');
       }
       saveAbandonedArtists();
       updateDataInfo();
@@ -1356,6 +1608,95 @@
       return galleryData.artists.find(a => a.id === artistId);
     }
 
+    function compressImageToJpg(base64Str, quality = 0.7) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          canvas.width = img.width;
+          canvas.height = img.height;
+          const ctx = canvas.getContext('2d');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', quality);
+          resolve(compressedBase64);
+        };
+        img.onerror = () => {
+          resolve(base64Str);
+        };
+        img.src = base64Str;
+      });
+    }
+
+    function updateProgress(percent, message) {
+      const container = document.getElementById('progress-container');
+      const bar = document.getElementById('progress-bar');
+      const text = document.getElementById('progress-text');
+
+      if (percent > 0 && percent < 100) {
+        container.classList.add('show');
+        text.classList.add('show');
+        bar.style.width = `${percent}%`;
+        text.textContent = message;
+      } else if (percent >= 100) {
+        bar.style.width = '100%';
+        text.textContent = message;
+        setTimeout(() => {
+          container.classList.remove('show');
+          text.classList.remove('show');
+          bar.style.width = '0%';
+        }, 1000);
+      } else {
+        container.classList.remove('show');
+        text.classList.remove('show');
+        bar.style.width = '0%';
+      }
+    }
+
+    async function compressArtistImages(artistId, onProgress) {
+      const artworks = galleryData.artworks.filter(a => a.artistId === artistId);
+      for (let i = 0; i < artworks.length; i++) {
+        const artwork = artworks[i];
+        const imageId = artwork.id;
+        if (galleryData.images[imageId]) {
+          galleryData.images[imageId] = await compressImageToJpg(galleryData.images[imageId]);
+          if (onProgress) {
+            onProgress(((i + 1) / artworks.length) * 100, `压缩中... ${i + 1}/${artworks.length}`);
+          }
+        }
+      }
+      await saveGalleryData(galleryData);
+    }
+
+    async function compressAllImages() {
+      const allImageIds = Object.keys(galleryData.images);
+      if (allImageIds.length === 0) {
+        showToast('没有图片需要压缩');
+        return;
+      }
+
+      if (!confirm(`即将压缩 ${allImageIds.length} 张图片，这可能需要一些时间。确定继续吗？`)) {
+        return;
+      }
+
+      const startSize = JSON.stringify(galleryData.images).length;
+
+      for (let i = 0; i < allImageIds.length; i++) {
+        const imageId = allImageIds[i];
+        galleryData.images[imageId] = await compressImageToJpg(galleryData.images[imageId]);
+        const percent = ((i + 1) / allImageIds.length) * 100;
+        updateProgress(percent, `压缩图片 ${i + 1}/${allImageIds.length}`);
+      }
+
+      await saveGalleryData(galleryData);
+      const endSize = JSON.stringify(galleryData.images).length;
+      const savedPercent = ((startSize - endSize) / startSize * 100).toFixed(1);
+
+      updateProgress(100, '压缩完成');
+      showToast(`压缩完成！共压缩 ${allImageIds.length} 张图片，节省 ${savedPercent}% 空间`);
+    }
+
     function getImageUrl(artworkId) {
       return galleryData.images[artworkId] || '';
     }
@@ -1375,7 +1716,7 @@
       };
     }
 
-    let currentPageSize = 6;
+    let currentPageSize = 20;
     let currentSort = 'upload';
     let currentFilter = 'all';
 
@@ -1689,17 +2030,20 @@
 
     function renderDiceResults() {
       const container = document.getElementById('dice-results');
-      const copyButtons = document.getElementById('dice-copy-buttons');
+      const copyButtonsTop = document.getElementById('dice-copy-buttons-top');
+      const copyButtonsBottom = document.getElementById('dice-copy-buttons-bottom');
       const confirmBtn = document.getElementById('confirm-rating-btn');
 
       if (diceResults.length === 0) {
         container.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 2rem; color: #999;">点击「抽取」获取画师组合</div>';
-        copyButtons.style.display = 'none';
+        copyButtonsTop.style.display = 'none';
+        copyButtonsBottom.style.display = 'none';
         confirmBtn.style.display = 'none';
         return;
       }
 
-      copyButtons.style.display = 'flex';
+      copyButtonsTop.style.display = 'flex';
+      copyButtonsBottom.style.display = 'flex';
       const hasTempRating = diceResults.some(r => r.tempRating);
       confirmBtn.style.display = hasTempRating ? 'block' : 'none';
 
