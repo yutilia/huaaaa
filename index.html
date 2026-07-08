@@ -1255,6 +1255,7 @@
       <label for="file-input" class="upload-btn">📁 导入数据</label>
       <input type="file" id="file-input" accept=".json" onchange="loadData(event)">
       <button class="upload-btn secondary" onclick="exportData()">📥 导出数据</button>
+      <button class="upload-btn secondary" onclick="exportAllArtists()">👤 导出所有画师</button>
       <button class="upload-btn secondary" onclick="exportAbandonedArtists()">🗑️ 导出废弃画师</button>
       <button class="upload-btn secondary" onclick="compressAllImages()">🖼️ 压缩图片</button>
       <span class="data-info" id="data-info">未加载数据</span>
@@ -1520,25 +1521,207 @@
       event.target.classList.add('active');
     }
 
-    function loadData(event) {
+    async function loadData(event) {
       const file = event.target.files[0];
       if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = async function (e) {
-        try {
-          const newData = JSON.parse(e.target.result);
-          const mergedData = mergeGalleryData(galleryData, newData);
-          galleryData = mergedData;
-          await saveGalleryData(galleryData);
-          updateDataInfo();
-          renderGallery();
-          showToast('数据导入成功');
-        } catch (err) {
-          showToast('数据加载失败，请检查文件格式');
+      const sizeMB = (file.size / 1048576).toFixed(1);
+      showToast(`正在读取 ${sizeMB} MB 数据，请勿关闭页面…`);
+      try {
+        const newData = await streamImportGallery(file);
+        // 合并 ratings / abandonedArtists（若导出文件中包含）
+        if (newData.ratings) { ratings = { ...ratings, ...newData.ratings }; saveRatings(); }
+        if (newData.abandonedArtists) {
+          newData.abandonedArtists.forEach(id => abandonedArtists.add(id));
+          saveAbandonedArtists();
         }
-      };
-      reader.readAsText(file);
+        const mergedData = mergeGalleryData(galleryData, newData);
+        galleryData = mergedData;
+        await saveGalleryData(galleryData);
+        updateDataInfo();
+        renderGallery();
+        showToast('数据导入成功');
+      } catch (err) {
+        console.error('import error', err);
+        showToast('数据加载失败：' + err.message);
+      } finally {
+        event.target.value = '';
+      }
+    }
+
+    // 流式导入：支持超大备份文件（含大量 base64 图片），避免一次性 JSON.parse 导致内存溢出/标签页崩溃
+    async function streamImportGallery(file) {
+      // 小文件直接整体解析
+      if (file.size < 30 * 1024 * 1024) {
+        const text = await file.text();
+        return JSON.parse(text);
+      }
+
+      const marker = '"images":';
+      const reader = file.stream().getReader();
+      const decoder = new TextDecoder('utf-8');
+
+      let textBuf = '';
+      let parsedMeta = null;
+      let carry = '';
+      // 状态机：expectKey | inKey | expectColon | expectValue | inValue | expectSep | done
+      let state = 'expectKey';
+      let curKey = '';
+      let curVal = '';
+      let imgCount = 0;
+      let lastToast = 0;
+      const images = {};
+
+      try {
+        // 阶段1：读取并累积文本，直到找到 "images": 标记
+        while (parsedMeta === null) {
+          const { done, value } = await reader.read();
+          if (done) {
+            const tail = decoder.decode();
+            if (tail) textBuf += tail;
+            break;
+          }
+          textBuf += decoder.decode(value, { stream: true });
+          const idx = textBuf.indexOf(marker);
+          if (idx !== -1) {
+            // 元数据前缀形如：{\n"artworks":[...],...,"artists":[...],\n  -> 去尾逗号补 } 即可解析
+            const metaText = textBuf.slice(0, idx);
+            const mj = metaText.replace(/,\s*$/, '') + '}';
+            parsedMeta = JSON.parse(mj);
+            if (!parsedMeta.artworks || !parsedMeta.artists) {
+              throw new Error('文件格式不正确，缺少 artworks 或 artists 字段');
+            }
+            parsedMeta.images = images;
+            showToast(`元数据已读取（画师 ${parsedMeta.artists.length}，作品 ${parsedMeta.artworks.length}），开始导入图片…`);
+            // 跳过 "images": 后的空白，定位到 images 对象的起始 {
+            const after = textBuf.slice(idx + marker.length);
+            let i = 0;
+            while (i < after.length && /\s/.test(after[i])) i++;
+            if (after[i] !== '{') throw new Error('images 字段格式异常');
+            carry = after.slice(i + 1);
+            break;
+          }
+          if (textBuf.length > 200 * 1024 * 1024) {
+            throw new Error('未找到 images 字段，文件格式异常');
+          }
+        }
+
+        // 未找到标记：回退整体解析
+        if (parsedMeta === null) {
+          return JSON.parse(textBuf);
+        }
+
+        // 阶段2：流式解析 images 段（"id1":"data1","id2":"data2",...}）
+        // 注：data URL 与 id 均为纯 ASCII，字符串内不含引号/反斜杠，可安全按引号切分；
+        //     状态机兼容带缩进（JSON.stringify(obj, null, 2)）与紧凑两种导出格式
+        while (state !== 'done') {
+          let progressed = true;
+          while (progressed && state !== 'done') {
+            progressed = false;
+
+            if (state === 'expectKey') {
+              let i = 0;
+              while (i < carry.length && /\s/.test(carry[i])) i++;
+              if (i >= carry.length) { carry = ''; break; }
+              const ch = carry[i];
+              carry = carry.slice(i + 1);
+              if (ch === '}') { state = 'done'; progressed = true; }
+              else if (ch === '"') { curKey = ''; state = 'inKey'; progressed = true; }
+              else { progressed = true; }
+              continue;
+            }
+            if (state === 'inKey') {
+              const q = carry.indexOf('"');
+              if (q === -1) { curKey += carry; carry = ''; break; }
+              curKey += carry.slice(0, q);
+              carry = carry.slice(q + 1);
+              state = 'expectColon';
+              progressed = true;
+              continue;
+            }
+            if (state === 'expectColon') {
+              const c = carry.indexOf(':');
+              if (c === -1) break;
+              carry = carry.slice(c + 1);
+              state = 'expectValue';
+              progressed = true;
+              continue;
+            }
+            if (state === 'expectValue') {
+              const q = carry.indexOf('"');
+              if (q === -1) break;
+              carry = carry.slice(q + 1);
+              curVal = '';
+              state = 'inValue';
+              progressed = true;
+              continue;
+            }
+            if (state === 'inValue') {
+              const q = carry.indexOf('"');
+              if (q === -1) { curVal += carry; carry = ''; break; }
+              curVal += carry.slice(0, q);
+              carry = carry.slice(q + 1);
+              images[curKey] = curVal;
+              imgCount++;
+              curKey = ''; curVal = '';
+              state = 'expectSep';
+              progressed = true;
+              const now = Date.now();
+              if (now - lastToast > 400) {
+                lastToast = now;
+                showToast(`正在导入图片… 已完成 ${imgCount} 张`);
+              }
+              continue;
+            }
+            if (state === 'expectSep') {
+              let i = 0;
+              while (i < carry.length && /\s/.test(carry[i])) i++;
+              if (i >= carry.length) { carry = ''; break; }
+              const ch = carry[i];
+              carry = carry.slice(i + 1);
+              if (ch === '}') { state = 'done'; progressed = true; }
+              else if (ch === ',') { state = 'expectKey'; progressed = true; }
+              else { progressed = true; }
+              continue;
+            }
+          }
+
+          if (state === 'done') break;
+          const { done, value } = await reader.read();
+          if (done) {
+            const tail = decoder.decode();
+            if (tail) carry += tail;
+            break;
+          }
+          carry += decoder.decode(value, { stream: true });
+        }
+
+        // 阶段3：images 闭合后，可能有 ratings/abandonedArtists 等后续字段，读取剩余内容解析
+        let rest = carry;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) {
+            const tail = decoder.decode();
+            if (tail) rest += tail;
+            break;
+          }
+          rest += decoder.decode(value, { stream: true });
+        }
+        rest = rest.trim();
+        // rest 形如 ,"ratings":{...},"abandonedArtists":[...]}  或  }
+        if (rest.startsWith(',')) {
+          // 把开头的 , 换成 {，末尾的 } 保留，构成合法 JSON 对象
+          const tailObj = JSON.parse('{' + rest.slice(1));
+          Object.assign(parsedMeta, tailObj);
+        }
+      } finally {
+        try { reader.releaseLock(); } catch (e) { }
+      }
+
+      if (state !== 'done') {
+        console.warn('images 段未正常闭合，已导入', imgCount, '张图片');
+      }
+      showToast(`图片导入完成，共 ${imgCount} 张`, 'success');
+      return parsedMeta;
     }
 
     function mergeGalleryData(existing, newData) {
@@ -1581,6 +1764,20 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
       showToast('数据导出成功');
+    }
+
+    function exportAllArtists() {
+      const allArtistNames = galleryData.artists.map(a => a.name);
+      const blob = new Blob([allArtistNames.join('\n')], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `artists_export_${new Date().toISOString().slice(0, 10)}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('已导出所有画师');
     }
 
     function exportAbandonedArtists() {
